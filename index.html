@@ -393,7 +393,7 @@ input[readonly]{background:var(--surface-2)!important;cursor:default;}
               <label>費用の入力方法</label>
               <div class="seg" id="seg-freight-mode">
                 <button class="on" onclick="setFreightMode('amount',this)">金額入力（JPY）</button>
-                <button onclick="setFreightMode('pct',this)">販売価格に対する%</button>
+                <button onclick="setFreightMode('pct',this)">発注金額に対する%</button>
               </div>
             </div>
 
@@ -422,12 +422,12 @@ input[readonly]{background:var(--surface-2)!important;cursor:default;}
             <!-- Mode B: % -->
             <div id="freight-pct-group" style="display:none">
               <div class="fg">
-                <label>輸送費率（販売価格に対して）</label>
+                <label>輸送費率（発注金額に対して）</label>
                 <div class="iunit">
                   <input type="number" id="freight-pct" step="0.1" min="0" max="50" placeholder="5.0" oninput="calc()">
                   <span class="unit">%</span>
                 </div>
-                <div class="help">販売価格 × 入力% を輸送費として逆算します（連立方程式で解法）</div>
+                <div class="help">発注金額（PAO発注数 × 商品代金）× 入力% を輸送費として計算</div>
               </div>
             </div>
           </div>
@@ -731,7 +731,7 @@ function calc() {
   // ── Price-driven mode ──
   if (inputMode === 'price' && directPrice > 0) {
     sellingPrice = directPrice;
-    if (freightMode === 'pct') freightPerPao = sellingPrice * fp;
+    if (freightMode === 'pct') freightPerPao = D * fp;
     const t = taxes(D);
     customsJPY = t.cust; importTaxJPY = t.imp; localTaxJPY = t.loc;
     totalCostPerPao = D + freightPerPao + customsJPY + importTaxJPY + localTaxJPY + shizaiJPY + kenpinJPY + katadaiPerPao;
@@ -757,19 +757,13 @@ function calc() {
       effCostPerSell  = Qsell > 0 ? totalCostAll / Qsell : totalCostPerPao;
       sellingPrice    = m < 1 ? effCostPerSell / (1-m) : 0;
     } else {
-      // % freight algebraic:
-      // totalCostPerPao = D×taxFactor + shizai + kenpin + katadai + S×fp
-      // S = (D×taxFactor + shizai + kenpin + katadai) × r / (1 - m - fp×r)
-      const r     = Qsell > 0 ? Math.max(Qpao,1) / Qsell : 1;
-      const baseCostPerPao = D * taxFactor + shizaiJPY + kenpinJPY + katadaiPerPao;
-      const denom = 1 - m - fp * r;
-      if (denom <= 0) { showEmpty(); return; }
-      sellingPrice    = baseCostPerPao * r / denom;
-      freightPerPao   = sellingPrice * fp;
+      // % freight: 発注金額（PAO発注数 × 商品代金）× %
+      // freightPerPao = D × fp
+      freightPerPao = D * fp;
       const t = taxes(D);
       customsJPY = t.cust; importTaxJPY = t.imp; localTaxJPY = t.loc;
       totalCostPerPao = D + freightPerPao + customsJPY + importTaxJPY + localTaxJPY + shizaiJPY + kenpinJPY + katadaiPerPao;
-      totalCostAll    = totalCostPerPao * Math.max(Qpao,1);
+      totalCostAll    = totalCostPerPao * Math.max(Qpao, 1);
       effCostPerSell  = Qsell > 0 ? totalCostAll / Qsell : totalCostPerPao;
     }
 
