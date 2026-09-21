@@ -278,7 +278,7 @@ input[readonly]{background:var(--surface-2)!important;cursor:default;}
             <div class="fg">
               <label>発注数（販売予定数）</label>
               <div class="iunit">
-                <input type="number" id="order-qty" step="1" min="1" placeholder="100" oninput="calcPAO()">
+                <input type="number" id="order-qty" step="1" min="1" placeholder="0" oninput="calcPAO()">
                 <span class="unit">個</span>
               </div>
               <div class="help">売上計算の基準 — 発注数 × 販売価格 ＝ 売上合計</div>
@@ -765,6 +765,7 @@ function calc() {
       totalCostPerPao = D + freightPerPao + customsJPY + importTaxJPY + localTaxJPY + shizaiJPY + kenpinJPY + katadaiPerPao;
       totalCostAll    = totalCostPerPao * Math.max(Qpao, 1);
       effCostPerSell  = Qsell > 0 ? totalCostAll / Qsell : totalCostPerPao;
+      sellingPrice    = m < 1 ? effCostPerSell / (1 - m) : 0;
     }
 
     // Sync price field
